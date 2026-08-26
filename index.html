@@ -149,8 +149,8 @@
     <script>
         // 1. Initialize Supabase Client
         // IMPORTANT: Replace these with your actual Supabase project credentials
-        const SUPABASE_URL = 'YOUR_SUPABASE_URL'; 
-        const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+        const SUPABASE_URL = 'https://supabase.com/dashboard/project/touwpydzxmjrvsppqyqr'; 
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRvdXdweWR6eG1qcnZzcHBxeXFyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc3NDM0NDIsImV4cCI6MjEwMzMxOTQ0Mn0.xhNYyd6-Vr1vb_f5iGEUA1_TDsIX3sf_6hh7UjwW6ik';
         
         // FIX: Renamed the variable to supabaseClient to avoid conflicting with the global 'supabase' object from the CDN
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
