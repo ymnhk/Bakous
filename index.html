@@ -81,7 +81,7 @@
                 <h2 class="text-xl md:text-2xl font-bold text-slate-800 tracking-wider flex-1 text-center md:text-right order-2 md:order-1">BAKOUS SPORTS CLUB</h2>
                 <!-- Logo -->
                 <div class="w-32 h-32 md:w-40 md:h-40 shrink-0 flex items-center justify-center order-1 md:order-2 z-10">
-                    <img src="Logo.png" alt="Bakous SC Logo" class="max-w-full max-h-full object-contain" onerror="this.onerror=null; this.src='https://placehold.co/400x400/176332/ffffff?text=BSC';">
+                    <img src="Logo_2.png" alt="Bakous SC Logo" class="max-w-full max-h-full object-contain" onerror="this.onerror=null; this.src='https://placehold.co/400x400/176332/ffffff?text=BSC';">
                 </div>
                 <!-- Arabic Name -->
                 <h2 class="text-xl md:text-2xl font-bold text-slate-800 font-arabic flex-1 text-center md:text-left order-3">نادي باكوس الرياضي</h2>
@@ -148,12 +148,17 @@
     
     <script>
         // 1. Initialize Supabase Client
-        // IMPORTANT: Replace these with your actual Supabase project credentials
-        const SUPABASE_URL = 'https://supabase.com/dashboard/project/touwpydzxmjrvsppqyqr'; 
+        const SUPABASE_URL = 'https://touwpydzxmjrvsppqyqr.supabase.co'; 
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRvdXdweWR6eG1qcnZzcHBxeXFyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc3NDM0NDIsImV4cCI6MjEwMzMxOTQ0Mn0.xhNYyd6-Vr1vb_f5iGEUA1_TDsIX3sf_6hh7UjwW6ik';
         
-        // FIX: Renamed the variable to supabaseClient to avoid conflicting with the global 'supabase' object from the CDN
-        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        let supabaseClient = null;
+        
+        // Prevent fatal error if the credentials haven't been added yet
+        if (SUPABASE_URL.startsWith('http')) {
+            supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        } else {
+            console.warn('⚠️ Supabase credentials not set. Please replace YOUR_SUPABASE_URL and YOUR_SUPABASE_ANON_KEY.');
+        }
 
         // 2. Handle Form Submission
         const form = document.getElementById('notify-form');
@@ -172,9 +177,19 @@
             submitBtn.textContent = 'جاري التسجيل...'; // "Registering..."
             messageEl.classList.add('hidden');
 
+            // Warn the user if Supabase isn't configured
+            if (!supabaseClient) {
+                setTimeout(() => {
+                    messageEl.textContent = 'تنبيه: لم يتم ربط قاعدة البيانات بعد. يرجى إضافة روابط Supabase في الكود.'; 
+                    messageEl.className = 'text-sm mt-3 font-arabic text-center text-amber-600 font-semibold block';
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'أعلمني';
+                }, 800);
+                return;
+            }
+
             try {
                 // Insert into Supabase table named 'subscribers'
-                // FIX: Use supabaseClient here
                 const { error } = await supabaseClient
                     .from('subscribers') 
                     .insert([{ email: email }]);
@@ -193,8 +208,10 @@
                 messageEl.className = 'text-sm mt-3 font-arabic text-center text-red-500 block';
             } finally {
                 // Reset button state
-                submitBtn.disabled = false;
-                submitBtn.textContent = 'أعلمني';
+                if (supabaseClient) {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'أعلمني';
+                }
             }
         });
     </script>
