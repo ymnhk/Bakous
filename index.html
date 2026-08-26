@@ -65,7 +65,7 @@
         }
     </style>
 </head>
-<body class="min-h-screen flex items-center justify-center p-4 selection:bg-brand-light selection:text-white relative overflow-hidden">
+<body class="min-h-screen flex items-center justify-center p-4 selection:bg-brand-light selection:text-white relative overflow-x-hidden">
 
     <!-- Decorative background blobs -->
     <div class="absolute top-0 left-0 w-96 h-96 bg-brand-light rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
@@ -81,7 +81,7 @@
                 <h2 class="text-xl md:text-2xl font-bold text-slate-800 tracking-wider flex-1 text-center md:text-right order-2 md:order-1">BAKOUS SPORTS CLUB</h2>
                 <!-- Logo -->
                 <div class="w-32 h-32 md:w-40 md:h-40 shrink-0 flex items-center justify-center order-1 md:order-2 z-10">
-                    <img src="Logo.png" alt="Bakous SC Logo" class="max-w-full max-h-full object-contain">
+                    <img src="Logo_2.png" alt="Bakous SC Logo" class="max-w-full max-h-full object-contain" onerror="this.onerror=null; this.src='https://placehold.co/400x400/176332/ffffff?text=BSC';">
                 </div>
                 <!-- Arabic Name -->
                 <h2 class="text-xl md:text-2xl font-bold text-slate-800 font-arabic flex-1 text-center md:text-left order-3">نادي باكوس الرياضي</h2>
@@ -106,10 +106,11 @@
 
         <!-- Subscription Form -->
         <div class="w-full max-w-md mx-auto fade-in-up delay-300">
-            <form id="notify-form" class="relative group" onsubmit="handleSubscribe(event)">
+            <form id="notify-form" class="relative group">
                 <div class="flex flex-col sm:flex-row-reverse gap-3">
                     <input 
                         type="email" 
+                        name="email"
                         id="email-input"
                         placeholder="أدخل بريدك الإلكتروني ليصلك كل جديد" 
                         required
@@ -117,15 +118,15 @@
                         dir="rtl"
                     >
                     <button 
-                        type="submit" 
-                        class="px-8 py-4 bg-slate-900 hover:bg-brand text-white font-semibold rounded-xl transition-colors duration-300 shadow-md whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand font-arabic"
+                        type="submit"
+                        id="submit-btn"
+                        class="px-8 py-4 bg-slate-900 hover:bg-brand text-white font-semibold rounded-xl transition-colors duration-300 shadow-md whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand font-arabic disabled:opacity-50"
                     >
                         أعلمني
                     </button>
                 </div>
-                <div id="success-message" class="hidden absolute -bottom-8 left-0 right-0 text-brand-dark font-medium text-sm mt-2 transition-all font-arabic text-center">
-                    شكراً! سنبقيك على اطلاع.
-                </div>
+                <!-- Status Message -->
+                <p id="form-message" class="text-sm mt-3 font-arabic text-center hidden"></p>
             </form>
         </div>
 
@@ -140,33 +141,62 @@
     <script>
         // Set current year
         document.getElementById('year').textContent = new Date().getFullYear();
+    </script>
 
-        // Handle simple form submission feedback
-        function handleSubscribe(event) {
-            event.preventDefault();
-            const form = document.getElementById('notify-form');
-            const input = document.getElementById('email-input');
-            const successMsg = document.getElementById('success-message');
-            const btn = form.querySelector('button');
+    <!-- Supabase JS Library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <script>
+        // 1. Initialize Supabase Client
+        // IMPORTANT: Replace these with your actual Supabase project credentials
+        const SUPABASE_URL = 'YOUR_SUPABASE_URL'; 
+        const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+        
+        // FIX: Renamed the variable to supabaseClient to avoid conflicting with the global 'supabase' object from the CDN
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-            if (input.value) {
-                // Simulate API call
-                btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i>';
-                btn.disabled = true;
+        // 2. Handle Form Submission
+        const form = document.getElementById('notify-form');
+        const emailInput = document.getElementById('email-input');
+        const submitBtn = document.getElementById('submit-btn');
+        const messageEl = document.getElementById('form-message');
 
-                setTimeout(() => {
-                    input.value = '';
-                    btn.textContent = 'أعلمني';
-                    btn.disabled = false;
-                    successMsg.classList.remove('hidden');
-                    
-                    // Hide message after a few seconds
-                    setTimeout(() => {
-                        successMsg.classList.add('hidden');
-                    }, 4000);
-                }, 1000);
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault(); // Prevent standard page reload
+            
+            const email = emailInput.value.trim();
+            if (!email) return;
+
+            // Set loading state
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'جاري التسجيل...'; // "Registering..."
+            messageEl.classList.add('hidden');
+
+            try {
+                // Insert into Supabase table named 'subscribers'
+                // FIX: Use supabaseClient here
+                const { error } = await supabaseClient
+                    .from('subscribers') 
+                    .insert([{ email: email }]);
+
+                if (error) throw error;
+
+                // Show success message
+                messageEl.textContent = 'تم التسجيل بنجاح! شكراً لك.'; // "Registered successfully!"
+                messageEl.className = 'text-sm mt-3 font-arabic text-center text-brand font-semibold block';
+                emailInput.value = ''; // Clear the input
+
+            } catch (error) {
+                console.error('Error saving email:', error);
+                // Show error message
+                messageEl.textContent = 'حدث خطأ. يرجى المحاولة مرة أخرى.'; // "An error occurred."
+                messageEl.className = 'text-sm mt-3 font-arabic text-center text-red-500 block';
+            } finally {
+                // Reset button state
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'أعلمني';
             }
-        }
+        });
     </script>
 </body>
 </html>
